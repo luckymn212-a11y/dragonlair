@@ -489,10 +489,11 @@
             }
         }
 
-        function withdrawZentic() {
+                function withdrawZentic() {
             let quota = getPlayerWithdrawQuota();
-            if (player.balanceZentic < 500000) {
-                alert("Minimum withdrawal is 500,000 Zentic.");
+            // Ubah batas minimum di bawah ini agar sinkron dengan kuota minimal tier rendah (750.000 Zentic)
+            if (player.balanceZentic < 750000) {
+                alert("Minimum withdrawal is 750,000 Zentic.");
                 return;
             }
             
@@ -505,7 +506,8 @@
                 updateUI();
                 alert("Withdrawal successful! Funds sent to your TON Wallet.");
             }
-        }
+                }
+        
 
         function copyReferralLink() {
             let userId = "123456789"; 
