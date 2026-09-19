@@ -409,20 +409,59 @@
             document.getElementById('total-output').innerText = '+' + totalYield.toLocaleString() + ' ZNT / hour';
         }
 
-        // Simulasi Pembelian Telur di Shop
-        function buyEgg(eggType) {
-            alert(`Purchasing ${eggType} successfully! Added a new dragon to your Nest.`);
-            // Simulasi penambahan naga baru dengan rarity acak
-            player.nest.push({
-                id: `dragon_${Date.now()}`,
-                rarity: "Uncommon",
-                yieldPerHour: DRAGON_STATS.Uncommon.yieldPerHour,
-                createdAt: Date.now(),
-                expiresAt: Date.now() + (DRAGON_STATS.Uncommon.lifespanDays * 24 * 60 * 60 * 1000),
-                status: "ACTIVE"
-            });
-            updateUI();
-        }
+        // Fungsi Pembelian Telur dengan Validasi Saldo Zentic
+function buyEgg(eggType) {
+    // Tentukan harga masing-masing telur (sesuaikan nominalnya jika perlu)
+    let price = 0;
+    let rarity = "Common";
+    let lifespanDays = 30;
+    let yieldVal = 500;
+
+    if (eggType === 'Scales Egg') {
+        price = 1000;       // Contoh harga Scales Egg
+        rarity = "Common";
+        lifespanDays = 30;
+        yieldVal = 500;
+    } else if (eggType === 'Wyrm Egg') {
+        price = 5000;       // Contoh harga Wyrm Egg
+        rarity = "Uncommon";
+        lifespanDays = 45;
+        yieldVal = 1200;
+    } else if (eggType === 'Draconis Egg') {
+        price = 15000;      // Contoh harga Draconis Egg
+        rarity = "Rare";
+        lifespanDays = 60;
+        yieldVal = 3000;
+    }
+
+    // Pastikan objek player dan properti zentic ada
+    if (typeof player.zentic === 'undefined') {
+        player.zentic = 0;
+    }
+
+    // Cek apakah saldo Zentic pemain mencukupi
+    if (player.zentic < price) {
+        alert(`Zentic kamu tidak cukup! Kamu butuh ${price} Zentic.`);
+        return; // Batalkan transaksi jika kurang
+    }
+
+    // Kurangi saldo Zentic pemain
+    player.zentic -= price;
+
+    // Tambahkan naga baru ke Nest
+    player.nest.push({
+        id: `dragon_${Date.now()}`,
+        rarity: rarity,
+        yieldPerHour: yieldVal,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + (lifespanDays * 24 * 60 * 60 * 1000),
+        status: "ACTIVE"
+    });
+
+    alert(`Successfully purchased ${eggType}!`);
+    updateUI();
+    }
+    
     </script>
 </body>
 </html>                                                                                           </html>
