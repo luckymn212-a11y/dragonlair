@@ -5,43 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DragonLair</title>
     <style>
-        /* Styling dasar aplikasi */
         body {
             background-color: #0f172a;
             color: #f8fafc;
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 15px;
+            padding-bottom: 70px;
+        }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
         }
         .btn {
-            background-color: #f59e0b;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: #fff;
             border: none;
-            padding: 10px 20px;
+            padding: 12px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             width: 100%;
+            text-align: center;
+        }
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+        }
+        .nav-item {
+            color: #94a3b8;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+        }
+        .nav-item.active {
+            color: #f59e0b;
         }
     </style>
 </head>
 <body>
 
-    <!-- Contoh Layar Social -->
-    <div id="screen-social">
+    <!-- 1. NEST SCREEN -->
+    <div id="screen-nest" class="screen active">
+        <div class="card">
+            <p>Player</p>
+            <h3>Jack @monsterland_bot</h3>
+            <div id="znt-balance" style="float: right; margin-top: -35px; background: #334155; padding: 5px 10px; border-radius: 6px; font-weight: bold;">0 ZNT</div>
+        </div>
+        <div class="card">
+            <p>TOTAL MINING OUTPUT</p>
+            <h2 style="color: #f59e0b;">+500 ZNT / hour</h2>
+        </div>
+        <h3>MY NEST (DRAGONS)</h3>
+        <div class="card">
+            <h4>COMMON</h4>
+            <p>+500 Zentic/h</p>
+            <p style="color: #94a3b8; font-size: 12px;">Lifespan: 30 Days Left</p>
+        </div>
+    </div>
+
+    <!-- 2. TREASURY SCREEN -->
+    <div id="screen-treasury" class="screen">
+        <h2>TREASURY & EGG SHOP</h2>
+        <p>Secure economy protected by asset lifespan decay.</p>
+        <div class="card">
+            <p><strong>Scales Egg</strong> - CLASSIC</p>
+            <p style="font-size: 13px; color: #94a3b8;">Standard egg for starting out.</p>
+            <button class="btn" onclick="buyEgg('Scales Egg', 50000)">Buy for 50,000 ZNT</button>
+        </div>
+    </div>
+
+    <!-- 3. SOCIAL SCREEN -->
+    <div id="screen-social" class="screen">
         <h2>SOCIAL & INVITE</h2>
         <p>Grow your community and earn passive rewards.</p>
+        <div class="card">
+            <p>REFERRAL BONUS</p>
+            <h3 style="color: #f59e0b;">10% Passive Income</h3>
+        </div>
         <button class="btn" onclick="copyReferralLink()">Copy Invite Link</button>
     </div>
 
+    <!-- BOTTOM NAVIGATION -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchScreen('nest', this)">🏠 Nest</div>
+        <div class="nav-item" onclick="switchScreen('treasury', this)">💎 Treasury</div>
+        <div class="nav-item" onclick="switchScreen('social', this)">🌐 Social</div>
+    </div>
+
     <script>
-        // Simulasi data player
+        // Data Player Utama
         let player = {
             zentic: 0,
             nest: []
         };
 
-        // Fungsi Salin Link Referral
+        // Fungsi Pindah Layar (Tab Navigation)
+        function switchScreen(screenName, element) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById('screen-' + screenName).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // Fungsi Salin Link Referral Telegram
         function copyReferralLink() {
             let userId = "123456789"; 
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -52,19 +132,14 @@
             let referralLink = `https://t.me/${botUsername}?start=ref_${userId}`;
 
             navigator.clipboard.writeText(referralLink).then(() => {
-                alert("Referral link copied to clipboard!\n\n" + referrallink);
+                alert("Referral link copied to clipboard!\n\n" + referralLink);
             }).catch(err => {
                 prompt("Copy your referral link below:", referralLink);
             });
         }
 
-        // Fungsi Pembelian Telur dengan Validasi Saldo ZNT
-        function buyEgg(eggType, customPrice) {
-            let price = customPrice || 50000;
-            let rarity = "Common";
-            let lifespanDays = 30;
-            let yieldVal = 500;
-
+        // Fungsi Beli Telur dengan Validasi ZNT yang Aman
+        function buyEgg(eggType, price) {
             if (typeof player.zentic === 'undefined') {
                 player.zentic = 0;
             }
@@ -81,10 +156,10 @@
             // Masukkan naga baru ke Nest
             player.nest.push({
                 id: `dragon_${Date.now()}`,
-                rarity: rarity,
-                yieldPerHour: yieldVal,
+                rarity: "Common",
+                yieldPerHour: 500,
                 createdAt: Date.now(),
-                expiresAt: Date.now() + (lifespanDays * 24 * 60 * 60 * 1000),
+                expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000),
                 status: "ACTIVE"
             });
 
@@ -93,8 +168,10 @@
         }
 
         function updateUI() {
-            // Fungsi pembaruan tampilan layar (UI)
-            console.log("UI Updated. Current ZNT:", player.zentic);
+            let balanceEl = document.getElementById('znt-balance');
+            if(balanceEl) {
+                balanceEl.innerText = player.zentic.toLocaleString() + " ZNT";
+            }
         }
     </script>
 </body>
