@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragonlair - Telegram Mini App</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 92%;
+            max-width: 400px;
+            height: 88vh;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
+        }
+        .active { display: flex; }
+        .content {
+            width: 100%;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-bottom: 10px;
+        }
+        
+        /* Header Profil */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 10px 14px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .user-info span { display: block; font-size: 11px; color: #94a3b8; }
+        .user-info b { font-size: 14px; color: #f59e0b; }
+        .balance-badge {
+            background: rgba(245, 158, 11, 0.1);
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid #f59e0b;
+            font-size: 13px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+
+        /* Kartu & Kotak Telur Shop */
+        .card {
+            background: #1e293b;
+            padding: 14px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .egg-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 18px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+        .egg-title { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; justify-content: space-between; align-items: center; }
+        .egg-desc { font-size: 11px; color: #94a3b8; margin: 4px 0 10px 0; }
+        .drop-rates { font-size: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 6px; border-radius: 8px; margin-bottom: 10px; }
+
+        /* Grid Statistik Referral */
+        .referral-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .ref-box {
+            background: #0f172a;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 10px 6px;
+            text-align: center;
+        }
+        .ref-box .val { font-size: 13px; font-weight: bold; color: #f59e0b; margin-top: 4px; }
+        .ref-box .lbl { font-size: 9px; color: #94a3b8; text-transform: uppercase; }
+
+        .btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+            margin-bottom: 8px;
+        }
+        .btn-secondary { background: #334155; box-shadow: none; color: #cbd5e1; }
+        .btn:active { transform: scale(0.97); }
+
+        /* Navigasi Bawah */
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: #1e293b;
+            padding: 8px 0;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .nav-item.active-nav { color: #f59e0b; font-weight: bold; }
+        
+        .spinner {
+            width: 35px; height: 35px;
+            border: 3px solid rgba(245, 158, 11, 0.2);
+            border-top: 3px solid #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOADING SCREEN -->
+    <div id="screen-loading" class="screen active" style="justify-content: center; align-items: center; text-align: center;">
+        <div class="content" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h1 style="color: #f59e0b; font-size: 24px; margin-bottom: 5px;">🐉 DRAGONLAIR</h1>
+            <div style="font-size: 64px; margin: 15px 0;">🐲</div>
+            <p style="color: #94a3b8; font-size: 13px;">Loading Ecosystem & TON Wallet...</p>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- 2. NEST (HOME / MINING) -->
+    <div id="screen-nest" class="screen">
+        <div class="content">
+            <div class="profile-header">
+                <div class="user-info">
+                    <span>Player</span>
+                    <b>Adi (Virtuoso)</b>
+                </div>
+                <div class="balance-badge" id="znt-score">1,400 ZNT</div>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Total Mining Output</div>
+                <div style="font-size: 20px; font-weight: bold; color: #f59e0b; margin-top: 4px;">+350 ZNT / hour</div>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 13px; font-weight: bold; color: #f59e0b; margin-bottom: 8px;">Merge System (3-in-1)</div>
+                <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">Upgrade 3 lower-tier dragons into 1 higher-tier dragon.</p>
+                <button class="btn btn-secondary" onclick="alert('Merging 3 Common Dragons into 1 Uncommon Dragon!')">Merge 3x Common ➔ Uncommon</button>
+            </div>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item active-nav" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('checkin')">📅 Check-in</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 3. TREASURY (SHOP & TON WALLET) -->
+    <div id="screen-treasury" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">TREASURY & EGG SHOP</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 15px;">Secured by TON Network & ROI 3-Year Standard.</p>
+            
+            <!-- Golden Egg Box -->
+            <div class="egg-card">
+                <div class="egg-title">
+                    <span>✨ Golden Egg</span>
+                    <span style="font-size: 10px; background: rgba(245, 158, 11, 0.2); padding: 3px 8px; border-radius: 6px;">POPULAR</span>
+                </div>
+                <div class="egg-desc">Unlock extraordinary companions with balanced rates.</div>
+                <div class="drop-rates">📊 Drop Rates: 45% Uncommon | 35% Rare | 17% Epic | 3% Legend</div>
+                <button class="btn" onclick="alert('Purchasing Golden Egg via TON Wallet...')">Buy for 649 Stars</button>
+            </div>
+
+            <!-- Celestial Egg Box -->
+            <div class="egg-card" style="border-color: #a855f7;">
+                <div class="egg-title" style="color: #a855f7;">
+                    <span>🌌 Celestial Egg</span>
+                    <span style="font-size: 10px; background: rgba(168, 85, 247, 0.2); padding: 3px 8px; border-radius: 6px;">ULTIMATE</span>
+                </div>
+                <div class="egg-desc">The most exclusive monsters await top-tier collectors.</div>
+                <div class="drop-rates" style="color: #a855f7; background: rgba(168, 85, 247, 0.1);">📊 Drop Rates: 85% Epic | 15% Legend</div>
+                <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7e22ce); box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);" onclick="alert('Purchasing Celestial Egg via TON Wallet...')">Buy for 2,100 Stars</button>
+            </div>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item active-nav" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('checkin')">📅 Check-in</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 4. CHECK-IN -->
+    <div id="screen-checkin" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">DAILY CHECK-IN</h2>
+            <p style="color: #94a3b8; font-size: 12px;">Claim daily rewards to empower your monsters.</p>
+            
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Status</div>
+                <div style="font-size: 18px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="checkin-status">Not Claimed</div>
+            </div>
+            
+            <button class="btn" onclick="claimDaily()">Claim 200 ZNT</button>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item active-nav" onclick="switchScreen('checkin')">📅 Check-in</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 5. SOCIAL & REFERRAL (WITH 10% PASSIVE BONUS) -->
+    <div id="screen-social" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">SOCIAL & INVITE</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 12px;">Grow your clan and earn passive daily rewards[span_1](start_span)[span_1](end_span).</p>
+            
+            <!-- Statistik Grid Referral (Mirip Referensi Gambar) -->
+            <div class="referral-grid">
+                <div class="ref-box">
+                    <div class="lbl">LUMIS</div>
+                    <div class="val">+1.2K</div>
+                </div>
+                <div class="ref-box">
+                    <div class="lbl">TICKET</div>
+                    <div class="val">+1</div>
+                </div>
+                <div class="ref-box">
+                    <div class="lbl">PASSIVE</div>
+                    <div class="val">10%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Daily Passive Earnings (10%)</div>
+                <div style="font-size: 18px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="passive-status">145 ZNT Available</div>
+                <button class="btn" style="margin-top: 10px; padding: 8px; font-size: 11px;" onclick="claimPassive()">Claim Daily 10% Bonus</button>
+            </div>
+            
+            <button class="btn" onclick="alert('Referral link copied successfully!')">Copy Invite Link</button>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('checkin')">📅 Check-in</button>
+            <button class="nav-item active-nav" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            document.getElementById('screen-loading').classList.remove('active');
+            document.getElementById('screen-nest').classList.add('active');
+        }, 2000);
+
+        function switchScreen(screenName) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenName).classList.add('active');
+        }
+
+        let zentic = 1400;
+        let passiveClaimed = false;
+
+        function claimDaily() {
+            zentic += 200;
+            document.getElementById('znt-score').innerText = zentic.toLocaleString() + ' ZNT';
+            document.getElementById('checkin-status').innerText = 'Claimed ✅';
+        }
+
+        function claimPassive() {
+            if (!passiveClaimed) {
+                zentic += 145;
+                document.getElementById('znt-score').innerText = zentic.toLocaleString() + ' ZNT';
+                document.getElementById('passive-status').innerText = 'Claimed Today ✅';
+                passiveClaimed = true;
+                alert('Successfully claimed 10% downline daily passive bonus[span_2](start_span)[span_2](end_span)!');
+            } else {
+                alert('You have already claimed your passive bonus today. Come back tomorrow!');
+            }
+        }
+    </script>
+</body>
+  </html>
