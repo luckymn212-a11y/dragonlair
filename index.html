@@ -589,22 +589,51 @@
             updateUI();
         }
 
-        function buyEggStars(eggType, starPrice, targetRarity) {
-            let confirmBuy = confirm(`Purchase ${eggType} for ${starPrice} Telegram Stars?`);
-            if (confirmBuy) {
-                player.nest.push({
-                    id: `dragon_${Date.now()}`,
-                    rarity: targetRarity,
-                    yieldPerHour: DRAGON_STATS[targetRarity].yieldPerHour,
-                    createdAt: Date.now(),
-                    expiresAt: Date.now() + (DRAGON_STATS[targetRarity].lifespanDays * 24 * 60 * 60 * 1000),
-                    status: "ACTIVE"
-                });
-                saveGameState();
-                alert(`Payment successful via Telegram Stars! ${eggType} (${targetRarity}) added to your nest.`);
-                updateUI();
+                function buyEggStars(eggType, starPrice, targetRarity) {
+            const tg = window.Telegram.WebApp;
+
+            // Pastikan berjalan di dalam ekosistem Telegram
+            if (tg && tg.openInvoice) {
+                // Di sini nanti bot backend-mu harus membuat invoice URL dari Telegram Bot API (createInvoiceLink)
+                // Contoh simulasi pemanggilan openInvoice Telegram:
+                alert(`Menghubungkan ke server pembayaran Telegram Stars untuk ${eggType} seharga ${starPrice} Stars...`);
+                
+                // Contoh implementasi asli:
+                // tg.openInvoice('URL_INVOICE_DARI_BOT_SERVER', function(status) {
+                //     if (status === 'paid') {
+                //         grantEgg(targetRarity, eggType);
+                //     }
+                // });
+
+                // Untuk simulasi interaktif sementara di frontend sebelum backend bot aktif:
+                let simulatedUserStars = 0; // Kamu bisa ubah untuk testing (misal: 500)
+                if (simulatedUserStars < starPrice) {
+                    alert(`Gagal! Saldo Telegram Stars kamu tidak cukup. (Saldo Anda: ⭐ ${simulatedUserStars}, Diperlukan: ⭐ ${starPrice})`);
+                    return;
+                }
+            } else {
+                // Fallback jika dibuka di luar Telegram (browser biasa)
+                let confirmBuy = confirm(`[Mode Simulasi Web] Beli ${eggType} seharga ${starPrice} Telegram Stars?`);
+                if (confirmBuy) {
+                    grantEgg(targetRarity, eggType);
+                }
             }
         }
+
+        function grantEgg(targetRarity, eggType) {
+            player.nest.push({
+                id: `dragon_${Date.now()}`,
+                rarity: targetRarity,
+                yieldPerHour: DRAGON_STATS[targetRarity].yieldPerHour,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (DRAGON_STATS[targetRarity].lifespanDays * 24 * 60 * 60 * 1000),
+                status: "ACTIVE"
+            });
+            saveGameState();
+            alert(`Pembayaran Telegram Stars Berhasil! ${eggType} (${targetRarity}) ditambahkan ke nest.`);
+            updateUI();
+                                     }
+                
     </script>
 </body>
 </html>
