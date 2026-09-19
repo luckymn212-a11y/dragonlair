@@ -409,46 +409,44 @@
             document.getElementById('total-output').innerText = '+' + totalYield.toLocaleString() + ' ZNT / hour';
         }
 
-        // Fungsi Pembelian Telur dengan Validasi Saldo Zentic
-function buyEgg(eggType) {
-    // Tentukan harga masing-masing telur (sesuaikan nominalnya jika perlu)
-    let price = 0;
+        // Fungsi Pembelian Telur yang Aman dari Bug Saldo Kurang
+function buyEgg(eggType, customPrice) {
+    let price = customPrice || 0;
     let rarity = "Common";
     let lifespanDays = 30;
     let yieldVal = 500;
 
-    if (eggType === 'Scales Egg') {
-        price = 1000;       // Contoh harga Scales Egg
+    // Deteksi otomatis berdasarkan nama telur jika harga tidak dikirim langsung
+    if (eggType.toLowerCase().includes('scales')) {
+        price = 50000; // Harga sesuai tampilan game: 50,000 Zentic
         rarity = "Common";
         lifespanDays = 30;
         yieldVal = 500;
-    } else if (eggType === 'Wyrm Egg') {
-        price = 5000;       // Contoh harga Wyrm Egg
-        rarity = "Uncommon";
-        lifespanDays = 45;
-        yieldVal = 1200;
-    } else if (eggType === 'Draconis Egg') {
-        price = 15000;      // Contoh harga Draconis Egg
-        rarity = "Rare";
-        lifespanDays = 60;
-        yieldVal = 3000;
+    } else if (eggType.toLowerCase().includes('wyrm')) {
+        // Contoh jika pakai mata uang Stars atau Zentic khusus
+        price = 0; // Atur jika berbayar Stars/Zentic
+    } else if (eggType.toLowerCase().includes('draconis')) {
+        price = 0; 
     }
 
-    // Pastikan objek player dan properti zentic ada
+    // Pastikan variabel saldo player ada
+    if (typeof player === 'undefined') {
+        window.player = { zentic: 0, nest: [] };
+    }
     if (typeof player.zentic === 'undefined') {
         player.zentic = 0;
     }
 
-    // Cek apakah saldo Zentic pemain mencukupi
+    // VALIDASI UTAMA: Cek apakah Zentic cukup
     if (player.zentic < price) {
-        alert(`Zentic kamu tidak cukup! Kamu butuh ${price} Zentic.`);
-        return; // Batalkan transaksi jika kurang
+        alert(`Zentic kamu tidak cukup! Kamu butuh ${price.toLocaleString()} Zentic, tapi saldo kamu hanya ${player.zentic.toLocaleString()} Zentic.`);
+        return; // Menghentikan fungsi agar tidak jadi dibeli
     }
 
-    // Kurangi saldo Zentic pemain
+    // Kurangi saldo jika cukup
     player.zentic -= price;
 
-    // Tambahkan naga baru ke Nest
+    // Masukkan naga baru ke Nest
     player.nest.push({
         id: `dragon_${Date.now()}`,
         rarity: rarity,
@@ -460,8 +458,8 @@ function buyEgg(eggType) {
 
     alert(`Successfully purchased ${eggType}!`);
     updateUI();
-    }
-    
+                }
+        
     </script>
 </body>
 </html>                                                                                           </html>
