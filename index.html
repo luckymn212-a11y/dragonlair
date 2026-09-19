@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragonlair - Telegram Mini App</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 92%;
+            max-width: 400px;
+            height: 88vh;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
+        }
+        .active { display: flex; }
+        .content {
+            width: 100%;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-bottom: 10px;
+        }
+        
+        /* Header Profil */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 10px 14px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .user-info span { display: block; font-size: 11px; color: #94a3b8; }
+        .user-info b { font-size: 14px; color: #f59e0b; }
+        .balance-badge {
+            background: rgba(245, 158, 11, 0.1);
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid #f59e0b;
+            font-size: 13px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+
+        /* Kartu Naga Minimalis (Sesuai Revisi Terbaru) */
+        .dragon-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .border-common { border: 2px solid #cbd5e1; }     /* Common */
+        .border-uncommon { border: 2px solid #22c55e; }   /* Uncommon */
+        .border-rare { border: 2px solid #3b82f6; }       /* Rare */
+        .border-epic { border: 2px solid #ec4899; }       /* Epic */
+        .border-mythic { border: 2px solid #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); } /* Mythic */
+
+        .dragon-img { font-size: 40px; margin: 4px 0; animation: float 2s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .dragon-rarity { font-size: 15px; font-weight: bold; color: #ffffff; text-transform: uppercase; margin-bottom: 2px; }
+        .dragon-yield { font-size: 12px; color: #f59e0b; font-weight: bold; margin-bottom: 4px; }
+        .dragon-lifespan { font-size: 11px; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; }
+        .status-killed { color: #ef4444 !important; font-weight: bold; }
+
+        /* Kartu & Kotak Telur Shop (Nama Baru: Scales, Wyrm, Draconis) */
+        .card {
+            background: #1e293b;
+            padding: 14px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .egg-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 18px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+        .egg-title { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; justify-content: space-between; align-items: center; }
+        .egg-desc { font-size: 11px; color: #94a3b8; margin: 4px 0 10px 0; }
+        .drop-rates { font-size: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 6px; border-radius: 8px; margin-bottom: 10px; }
+
+        /* Kurs Rate Banner */
+        .rate-banner {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 11px;
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+            margin-top: 4px;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        /* Navigasi Bawah */
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: #1e293b;
+            padding: 8px 0;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .nav-item.active-nav { color: #f59e0b; font-weight: bold; }
+        
+        .spinner {
+            width: 35px; height: 35px;
+            border: 3px solid rgba(245, 158, 11, 0.2);
+            border-top: 3px solid #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 15px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOADING SCREEN -->
+    <div id="screen-loading" class="screen active" style="justify-content: center; align-items: center; text-align: center;">
+        <div class="content" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h1 style="color: #f59e0b; font-size: 24px; margin-bottom: 5px;">🐉 DRAGONLAIR</h1>
+            <div style="font-size: 64px; margin: 15px 0; position: relative;">
+                🐲<span style="position: absolute; font-size: 32px; bottom: 0; right: -5px;">🔥</span>
+            </div>
+            <p style="color: #f59e0b; font-size: 13px; font-weight: bold;">Initializing Dragon Lair...</p>
+            <p style="color: #94a3b8; font-size: 11px; margin-top: 2px;">Connecting Telegram & TON Wallet</p>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- 2. NEST (Tampilan Minimalis Sesuai Revisi: Rarity, Yield/h, & Lifespan Bahasa Inggris) -->
+    <div id="screen-nest" class="screen">
+        <div class="content">
+            <div class="profile-header">
+                <div class="user-info">
+                    <span>Player</span>
+                    <b id="telegram-username">Loading...</b>
+                </div>
+                <div class="balance-badge" id="znt-score">0 ZNT</div>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Total Mining Output</div>
+                <div style="font-size: 20px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="total-output">+500 ZNT / hour</div>
+            </div>
+
+            <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase;">My Nest (Dragons)</div>
+            
+            {/* Wadah Render Nest Dinamis */}
+            <div id="nest-container">
+                <!-- Data naga pemain baru (Free 1 Common) akan dimuat otomatis lewat JS -->
+            </div>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item active-nav" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 3. TREASURY / SHOP (Menggunakan Nama Telur Baru) -->
+    <div id="screen-treasury" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">TREASURY & EGG SHOP</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">Secure economy protected by asset lifespan decay.</p>
+            
+            <div class="rate-banner">
+                <span>💱 Exchange Rate</span>
+                <span>1M ZNT = $1 USD</span>
+            </div>
+
+            <!-- Scales Egg -->
+            <div class="egg-card">
+                <div class="egg-title">
+                    <span>🥚 Scales Egg</span>
+                    <span style="font-size: 10px; background: rgba(245, 158, 11, 0.2); padding: 3px 8px; border-radius: 6px;">CLASSIC</span>
+                </div>
+                <div class="egg-desc">Standard egg for starting out. Focus on Common & Uncommon.</div>
+                <div class="drop-rates">📊 Drop: 60% Common | 27% Uncommon | 9% Rare | 3% Epic | 1% Mythic</div>
+                <button class="btn" onclick="buyEgg('SCALES_EGG')">Buy for 50,000 Zentic</button>
+            </div>
+
+            <!-- Wyrm Egg -->
+            <div class="egg-card" style="border-color: #3b82f6;">
+                <div class="egg-title" style="color: #3b82f6;">
+                    <span>🐉 Wyrm Egg</span>
+                    <span style="font-size: 10px; background: rgba(59, 130, 246, 0.2); padding: 3px 8px; border-radius: 6px;">POPULAR</span>
+                </div>
+                <div class="egg-desc">Mid-tier companions. No Common drops guaranteed.</div>
+                <div class="drop-rates" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);">📊 Drop: 45% Uncommon | 35% Rare | 17% Epic | 3% Mythic</div>
+                <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);" onclick="buyEgg('WYRM_EGG')">Buy for 649 Stars</button>
+            </div>
+
+            <!-- Draconis Egg -->
+            <div class="egg-card" style="border-color: #a855f7;">
+                <div class="egg-title" style="color: #a855f7;">
+                    <span>✨ Draconis Egg</span>
+                    <span style="font-size: 10px; background: rgba(168, 85, 247, 0.2); padding: 3px 8px; border-radius: 6px;">ULTIMATE</span>
+                </div>
+                <div class="egg-desc">High-tier ultimate dragons for top collectors.</div>
+                <div class="drop-rates" style="color: #a855f7; background: rgba(168, 85, 247, 0.1);">📊 Drop: 85% Epic | 15% Mythic</div>
+                <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7e22ce); box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);" onclick="buyEgg('DRACONIS_EGG')">Buy for 2,100 Stars</button>
+            </div>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item active-nav" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 4. SOCIAL -->
+    <div id="screen-social" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">SOCIAL & INVITE</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 12px;">Grow your community and earn passive rewards.</p>
+            
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Referral Bonus</div>
+                <div style="font-size: 18px; font-weight: bold; color: #f59e0b; margin-top: 4px;">10% Passive Income</div>
+            </div>
+            
+            <button class="btn" onclick="alert('Referral link copied successfully!')">Copy Invite Link</button>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item active-nav" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Statistik & Data Game
+        const DRAGON_STATS = {
+            Common: { yieldPerHour: 500, lifespanDays: 30, classStyle: "border-common", icon: "🐉" },
+            Uncommon: { yieldPerHour: 1200, lifespanDays: 45, classStyle: "border-uncommon", icon: "🐉" },
+            Rare: { yieldPerHour: 3000, lifespanDays: 60, classStyle: "border-rare", icon: "🐉" },
+            Epic: { yieldPerHour: 7500, lifespanDays: 75, classStyle: "border-epic", icon: "🐲" },
+            Mythic: { yieldPerHour: 15000, lifespanDays: 90, classStyle: "border-mythic", icon: "👑🐉" }
+        };
+
+        // State Pemain (Mendapatkan 1 Naga Common Gratis Saat Awal)
+        let player = {
+            balanceZentic: 0,
+            nest: [
+                {
+                    id: `dragon_${Date.now()}_init`,
+                    rarity: "Common",
+                    yieldPerHour: DRAGON_STATS.Common.yieldPerHour,
+                    createdAt: Date.now(),
+                    expiresAt: Date.now() + (DRAGON_STATS.Common.lifespanDays * 24 * 60 * 60 * 1000),
+                    status: "ACTIVE"
+                }
+            ]
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            
+            const usernameElem = document.getElementById('telegram-username');
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                usernameElem.innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+            } else {
+                usernameElem.innerText = 'Adi (Collector)';
+            }
+            updateUI();
+        });
+
+        setTimeout(() => {
+            document.getElementById('screen-loading').classList.remove('active');
+            document.getElementById('screen-nest').classList.add('active');
+        }, 1500);
+
+        function switchScreen(screenName) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenName).classList.add('active');
+        }
+
+        // Cek Status Lifespan & Ubah ke "KILLED" Jika Expired
+        function checkAndUpdateLifespan(dragon) {
+            const currentTime = Date.now();
+            if (currentTime >= dragon.expiresAt) {
+                dragon.status = "KILLED";
+            }
+            return dragon;
+        }
+
+        // Render Kartu Naga Minimalis ke UI Nest
+        function updateUI() {
+            document.getElementById('znt-score').innerText = player.balanceZentic.toLocaleString() + " ZNT";
+
+            let nestContainer = document.getElementById('nest-container');
+            nestContainer.innerHTML = '';
+
+            let totalYield = 0;
+
+            player.nest.forEach(dragon => {
+                const updatedDragon = checkAndUpdateLifespan(dragon);
+                const stats = DRAGON_STATS[updatedDragon.rarity];
+                
+                if (updatedDragon.status === "ACTIVE") {
+                    totalYield += updatedDragon.yieldPerHour;
+                }
+
+                // Hitung sisa hari lifespan dalam bahasa Inggris
+                let timeRemainingMs = updatedDragon.expiresAt - Date.now();
+                let daysLeft = Math.max(0, Math.ceil(timeRemainingMs / (1000 * 60 * 60 * 24)));
+                
+                let lifespanText = updatedDragon.status === "KILLED" 
+                    ? `<span class="status-killed">Status: KILLED</span>` 
+                    : `Lifespan: ${daysLeft} Days Left`;
+
+                let cardHTML = `
+                    <div class="dragon-card ${stats.classStyle}">
+                        <div class="dragon-img">${stats.icon}</div>
+                        <div class="dragon-rarity">${updatedDragon.rarity}</div>
+                        <div class="dragon-yield">+${updatedDragon.yieldPerHour.toLocaleString()} Zentic/h</div>
+                        <div class="dragon-lifespan">${lifespanText}</div>
+                    </div>
+                `;
+                nestContainer.innerHTML += cardHTML;
+            });
+
+            document.getElementById('total-output').innerText = '+' + totalYield.toLocaleString() + ' ZNT / hour';
+        }
+
+        // Simulasi Pembelian Telur di Shop
+        function buyEgg(eggType) {
+            alert(`Purchasing ${eggType} successfully! Added a new dragon to your Nest.`);
+            // Simulasi penambahan naga baru dengan rarity acak
+            player.nest.push({
+                id: `dragon_${Date.now()}`,
+                rarity: "Uncommon",
+                yieldPerHour: DRAGON_STATS.Uncommon.yieldPerHour,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (DRAGON_STATS.Uncommon.lifespanDays * 24 * 60 * 60 * 1000),
+                status: "ACTIVE"
+            });
+            updateUI();
+        }
+    </script>
+</body>
+</html>                                                                                           </html>
+              
