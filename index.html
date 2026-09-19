@@ -6,6 +6,29 @@
     <title>Dragonlair - Telegram Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Gaya CSS kamu di sini */
+    </style>
+</head>
+<body>
+
+    <!-- Konten HTML Game Kamu -->
+
+    <script>
+        // === LETAKKAN KODE RESET DI SINI (PALING ATAS) ===
+        const CURRENT_VERSION = 'v2_reset'; 
+        const savedVersion = localStorage.getItem('dragonlair_version');
+
+        if (savedVersion !== CURRENT_VERSION) {
+            localStorage.clear();
+            localStorage.setItem('dragonlair_version', CURRENT_VERSION);
+            location.reload();
+        }
+        // =================================================
+
+        // Skrip game JavaScript kamu selanjutnya ada di bawah sini...
+    </script>
+</body>
+</html>
         body {
             margin: 0;
             padding: 0;
