@@ -282,7 +282,24 @@
                 <div style="font-size: 18px; font-weight: bold; color: #f59e0b; margin-top: 4px;">10% Passive Income</div>
             </div>
             
-            <button class="btn" onclick="alert('Referral link copied successfully!')">Copy Invite Link</button>
+            <button class="btn" onclick="copyReferralLink()">Copy Invite Link</button>
+            function copyReferralLink() {
+    let userId = "123456789"; // Default jika mode tamu
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+    }
+
+    // Ganti "Dragonlair_bot" dengan username bot Telegram aslimu
+    let botUsername = "DragonzenticBot"; 
+    let referralLink = `https://t.me/${botUsername}?start=ref_${userId}`;
+
+    navigator.clipboard.writeText(referralLink).then(() => {
+        alert("Referral link copied to clipboard!\n\n" + referralLink);
+    }).catch(err => {
+        prompt("Copy your referral link below:", referralLink);
+    });
+}
+            
         </div>
         
         <div class="nav-bar">
