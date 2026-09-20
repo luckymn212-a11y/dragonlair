@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragonlair - Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 92%;
+            max-width: 400px;
+            height: 88vh;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
+        }
+        .active { display: flex; }
+        .content {
+            width: 100%;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-bottom: 10px;
+        }
+        
+        /* Profile Header */
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 10px 14px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .user-info span { display: block; font-size: 11px; color: #94a3b8; }
+        .user-info b { font-size: 14px; color: #f59e0b; }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .balance-badge {
+            background: rgba(245, 158, 11, 0.1);
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid #f59e0b;
+            font-size: 12px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+        .wallet-icon-btn {
+            background: #334155;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 10px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Ad Boost Card Styling */
+        .boost-card {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(30, 41, 59, 0.95));
+            border: 1px dashed #f59e0b;
+            border-radius: 16px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .boost-info b { display: block; font-size: 13px; color: #f59e0b; }
+        .boost-info span { font-size: 11px; color: #94a3b8; }
+        .btn-boost {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            white-space: nowrap;
+        }
+        .btn-boost:disabled {
+            background: #334155;
+            color: #64748b;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* Dragon Cards */
+        .dragon-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .border-common { border: 2px solid #cbd5e1; }     
+        .border-uncommon { border: 2px solid #22c55e; }   
+        .border-rare { border: 2px solid #3b82f6; }       
+        .border-epic { border: 2px solid #ec4899; }       
+        .border-mythic { border: 2px solid #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); } 
+        .border-legend { border: 2px solid #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); }
+
+        .dragon-img { font-size: 40px; margin: 4px 0; animation: float 2s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .dragon-rarity { font-size: 15px; font-weight: bold; color: #ffffff; text-transform: uppercase; margin-bottom: 2px; }
+        .dragon-yield { font-size: 12px; color: #f59e0b; font-weight: bold; margin-bottom: 4px; }
+        .dragon-lifespan { font-size: 11px; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; }
+        .status-killed { color: #ef4444 !important; font-weight: bold; }
+
+        /* Shop & Wallet Boxes */
+        .card {
+            background: #1e293b;
+            padding: 14px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .egg-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 18px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+        .egg-title { font-size: 16px; font-weight: bold; color: #f59e0b; display: flex; justify-content: space-between; align-items: center; }
+        .egg-desc { font-size: 11px; color: #94a3b8; margin: 4px 0 10px 0; }
+        .drop-rates { font-size: 10px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 6px; border-radius: 8px; margin-bottom: 10px; }
+
+        .rate-banner {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 11px;
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+            margin-top: 4px;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        /* Bottom Navigation */
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: #1e293b;
+            padding: 8px 0;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .nav-item.active-nav { color: #f59e0b; font-weight: bold; }
+        
+        .spinner {
+            width: 35px; height: 35px;
+            border: 3px solid rgba(245, 158, 11, 0.2);
+            border-top: 3px solid #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 15px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOADING SCREEN -->
+    <div id="screen-loading" class="screen active" style="justify-content: center; align-items: center; text-align: center;">
+        <div class="content" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h1 style="color: #f59e0b; font-size: 24px; margin-bottom: 5px;">🐉 DRAGONLAIR</h1>
+            <div style="font-size: 64px; margin: 15px 0; position: relative;">
+                🐲<span style="position: absolute; font-size: 32px; bottom: -5px; right: -5px;">⛏️</span>
+            </div>
+            <p style="color: #f59e0b; font-size: 13px; font-weight: bold;">Initializing Dragon Lair...</p>
+            <p style="color: #94a3b8; font-size: 11px; margin-top: 2px;">Connecting Telegram & TON Wallet</p>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- 2. NEST -->
+    <div id="screen-nest" class="screen">
+        <div class="content">
+            <div class="profile-header">
+                <div class="user-info">
+                    <span>Player</span>
+                    <b id="telegram-username">Loading...</b>
+                </div>
+                <div class="header-right">
+                    <div class="balance-badge" id="znt-score">0 Zentic</div>
+                    <button class="wallet-icon-btn" onclick="switchScreen('treasury')" title="Wallet & Treasury">👛</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Total Mining Output</div>
+                <div style="font-size: 20px; font-weight: bold; color: #f59e0b; margin-top: 4px;" id="total-output">+100 Zentic / hour</div>
+            </div>
+
+            <!-- Ad Boost Card (Watch 2 Ads for 1x Boost) -->
+            <div class="boost-card">
+                <div class="boost-info">
+                    <b>⚡ 2X Mining Boost</b>
+                    <span id="boost-status-text">Progress: 0/2 Ads (2 left today)</span>
+                </div>
+                <button class="btn-boost" id="btn-watch-ad" onclick="handleWatchAd()">Watch Ad</button>
+            </div>
+
+            <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase;">My Nest (Dragons)</div>
+            
+            <div id="nest-container">
+                <!-- Dragon Render Container -->
+            </div>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item active-nav" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 3. TREASURY / SHOP & WITHDRAWAL -->
+    <div id="screen-treasury" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">TREASURY & WALLET</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">Secure economy protected by weekly quotas.</p>
+            
+            <div class="rate-banner">
+                <span>💱 Exchange Rate</span>
+                <span>1M Zentic = $1 USD</span>
+            </div>
+
+            <!-- TON Wallet Status & Withdraw Panel -->
+            <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 12px; font-weight: bold; color: #38bdf8;" id="wallet-status-text">🔌 TON Wallet: Not Connected</span>
+                </div>
+                <div id="wallet-details-box" style="display: none; font-size: 11px; color: #94a3b8; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
+                    <div><b>Address:</b> <span id="wallet-addr-text">-</span></div>
+                    <div style="margin-top: 4px;"><b>Weekly Quota:</b> <span id="quota-tier-text" style="color: #f59e0b; font-weight: bold;">-</span></div>
+                </div>
+                
+                <button class="btn" style="background: linear-gradient(135deg, #0ea5e9, #0369a1); box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3); margin-bottom: 6px;" onclick="toggleConnectWallet()" id="wallet-action-btn">Connect TON Wallet</button>
+                <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);" onclick="withdrawZentic()" id="withdraw-btn" disabled>Withdraw to TON</button>
+            </div>
+
+            <div style="font-size: 13px; font-weight: bold; color: #f59e0b; margin: 14px 0 8px 0; text-transform: uppercase;">Egg Shop (Telegram Stars)</div>
+
+            <!-- Scales Egg (F2P - Zentic) -->
+            <div class="egg-card">
+                <div class="egg-title">
+                    <span>🥚 Scales Egg</span>
+                    <span style="font-size: 10px; background: rgba(245, 158, 11, 0.2); padding: 3px 8px; border-radius: 6px;">F2P / FREE</span>
+                </div>
+                <div class="egg-desc">Standard starter egg. Buy using in-game Zentic earnings.</div>
+                <div class="drop-rates">📊 Drop: Common / Uncommon</div>
+                <button class="btn" onclick="buyEgg('Scales Egg', 50000)">Buy for 50,000 Zentic</button>
+            </div>
+
+            <!-- Wyrm Egg (15 Stars) -->
+            <div class="egg-card" style="border-color: #3b82f6;">
+                <div class="egg-title" style="color: #3b82f6;">
+                    <span>🐉 Wyrm Egg</span>
+                    <span style="font-size: 10px; background: rgba(59, 130, 246, 0.2); padding: 3px 8px; border-radius: 6px;">15 STARS</span>
+                </div>
+                <div class="egg-desc">Mid-tier companions. Unlocks 4M Weekly Withdrawal Quota.</div>
+                <div class="drop-rates" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);">📊 Drop: Rare / Epic</div>
+                <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);" onclick="buyEggStars('Wyrm Egg', 15, 'Rare')">Buy for 15 Telegram Stars</button>
+            </div>
+
+            <!-- Draconis Egg (50 Stars) -->
+            <div class="egg-card" style="border-color: #a855f7;">
+                <div class="egg-title" style="color: #a855f7;">
+                    <span>✨ Draconis Egg</span>
+                    <span style="font-size: 10px; background: rgba(168, 85, 247, 0.2); padding: 3px 8px; border-radius: 6px;">50 STARS</span>
+                </div>
+                <div class="egg-desc">High-tier dragons. Unlocks 4M Weekly Withdrawal Quota.</div>
+                <div class="drop-rates" style="color: #a855f7; background: rgba(168, 85, 247, 0.1);">📊 Drop: Epic / Mythic</div>
+                <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7e22ce); box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3);" onclick="buyEggStars('Draconis Egg', 50, 'Epic')">Buy for 50 Telegram Stars</button>
+            </div>
+
+            <!-- Legend Egg (220 Stars - 100% Legend) -->
+            <div class="egg-card" style="border-color: #f59e0b; background: linear-gradient(145deg, #2a1f12, #0f172a);">
+                <div class="egg-title" style="color: #f59e0b;">
+                    <span>👑 Legend Egg</span>
+                    <span style="font-size: 10px; background: rgba(245, 158, 11, 0.3); padding: 3px 8px; border-radius: 6px;">220 STARS</span>
+                </div>
+                <div class="egg-desc">Ultimate prestige egg. Unlocks 20M Weekly Whale Quota!</div>
+                <div class="drop-rates" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1);">📊 Drop: 100% Legend / Mythic Yield</div>
+                <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #b45309); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);" onclick="buyEggStars('Legend Egg', 220, 'Legend')">Buy for 220 Telegram Stars</button>
+            </div>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item active-nav" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <!-- 4. SOCIAL -->
+    <div id="screen-social" class="screen">
+        <div class="content">
+            <h2 style="color: #f59e0b; font-size: 18px; margin-top: 0;">SOCIAL & INVITE</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin-bottom: 12px;">Grow your community and earn passive rewards.</p>
+            
+            <div class="card">
+                <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase;">Referral Bonus</div>
+                <div style="font-size: 18px; font-weight: bold; color: #f59e0b; margin-top: 4px;">10% Passive Income</div>
+            </div>
+            
+            <button class="btn" onclick="copyReferralLink()">Copy Invite Link</button>
+        </div>
+        
+        <div class="nav-bar">
+            <button class="nav-item" onclick="switchScreen('nest')">🏠 Nest</button>
+            <button class="nav-item" onclick="switchScreen('treasury')">💎 Treasury</button>
+            <button class="nav-item active-nav" onclick="switchScreen('social')">🌐 Social</button>
+        </div>
+    </div>
+
+    <script>
+        // === VERSION RESET CODE ===
+        const CURRENT_VERSION = 'v4_ads_en'; 
+        const savedVersion = localStorage.getItem('dragonlair_version');
+
+        if (savedVersion !== CURRENT_VERSION) {
+            localStorage.clear();
+            localStorage.setItem('dragonlair_version', CURRENT_VERSION);
+            location.reload();
+        }
+        // ==========================
+
+        const DRAGON_STATS = {
+            Common: { yieldPerHour: 100, lifespanDays: 30, classStyle: "border-common", icon: "🐉" },
+            Uncommon: { yieldPerHour: 300, lifespanDays: 45, classStyle: "border-uncommon", icon: "🐉" },
+            Rare: { yieldPerHour: 650, lifespanDays: 60, classStyle: "border-rare", icon: "🐉" },
+            Epic: { yieldPerHour: 1400, lifespanDays: 75, classStyle: "border-epic", icon: "🐲" },
+            Mythic: { yieldPerHour: 3000, lifespanDays: 90, classStyle: "border-mythic", icon: "👑🐉" },
+            Legend: { yieldPerHour: 7500, lifespanDays: 30, classStyle: "border-legend", icon: "🌟🐲" }
+        };
+
+        let player = loadGameState();
+
+        function loadGameState() {
+            const savedPlayer = localStorage.getItem('dragonlair_player');
+            if (savedPlayer) {
+                let parsedPlayer = JSON.parse(savedPlayer);
+                
+                // Initialize default ad properties if missing
+                if (parsedPlayer.adProgress === undefined) parsedPlayer.adProgress = 0;
+                if (parsedPlayer.adDailyCount === undefined) parsedPlayer.adDailyCount = 0;
+                if (parsedPlayer.lastAdDate === undefined) parsedPlayer.lastAdDate = "";
+                if (parsedPlayer.boostExpiresAt === undefined) parsedPlayer.boostExpiresAt = 0;
+
+                if (parsedPlayer.lastSavedTime) {
+                    const now = Date.now();
+                    const elapsedHours = (now - parsedPlayer.lastSavedTime) / (1000 * 60 * 60);
+                    
+                    let activeYieldPerHour = 0;
+                    parsedPlayer.nest.forEach(dragon => {
+                        if (now < dragon.expiresAt) {
+                            dragon.status = "ACTIVE";
+                            const isBoostActive = parsedPlayer.boostExpiresAt && (parsedPlayer.boostExpiresAt > now);
+                            const multiplier = isBoostActive ? 2 : 1;
+                            activeYieldPerHour += (dragon.yieldPerHour * multiplier);
+                        } else {
+                            dragon.status = "KILLED";
+                        }
+                    });
+
+                    parsedPlayer.balanceZentic += (elapsedHours * activeYieldPerHour);
+                }
+                return parsedPlayer;
+            } else {
+                return {
+                    balanceZentic: 0,
+                    lastSavedTime: Date.now(),
+                    walletConnected: false,
+                    walletAddress: null,
+                    adProgress: 0,
+                    adDailyCount: 0,
+                    lastAdDate: "",
+                    boostExpiresAt: 0,
+                    nest: [
+                        {
+                            id: `dragon_${Date.now()}_init`,
+                            rarity: "Common",
+                            yieldPerHour: DRAGON_STATS.Common.yieldPerHour,
+                            createdAt: Date.now(),
+                            expiresAt: Date.now() + (DRAGON_STATS.Common.lifespanDays * 24 * 60 * 60 * 1000),
+                            status: "ACTIVE"
+                        }
+                    ]
+                };
+            }
+        }
+
+        function saveGameState() {
+            player.lastSavedTime = Date.now();
+            localStorage.setItem('dragonlair_player', JSON.stringify(player));
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+        }
+
+        function checkDailyAdReset() {
+            const todayStr = new Date().toDateString();
+            if (player.lastAdDate !== todayStr) {
+                player.lastAdDate = todayStr;
+                player.adDailyCount = 0;
+                player.adProgress = 0;
+            }
+        }
+
+        function handleWatchAd() {
+            checkDailyAdReset();
+
+            if (player.adDailyCount >= 2) {
+                alert('You have reached the maximum limit of 2 boost claims today!');
+                return;
+            }
+
+            // SIMULATED AD PLAYBACK (AdsGram Integration Ready)
+            let isAdCompleted = confirm("Simulation: Watch AdsGram ad until finished? (Click OK to complete)");
+
+            if (isAdCompleted) {
+                player.adProgress += 1;
+                
+                if (player.adProgress < 2) {
+                    alert(`Ad 1 completed! Watch 1 more ad (Total 2x) to activate the 2x mining boost.`);
+                } else {
+                    // Success watching 2 ads! Grant 1 hour boost
+                    player.adProgress = 0;
+                    player.adDailyCount += 1;
+                    
+                    const oneHour = 60 * 60 * 1000;
+                    const now = Date.now();
+                    if (player.boostExpiresAt > now) {
+                        player.boostExpiresAt += oneHour;
+                    } else {
+                        player.boostExpiresAt = now + oneHour;
+                    }
+                    
+                    alert('🎉 Congratulations! 2 ads watched successfully. 2x Mining Boost activated for 1 hour!');
+                }
+                
+                saveGameState();
+                updateUI();
+            } else {
+                alert('Ad playback canceled. You must finish watching to gain progress.');
+            }
+        }
+
+        function updateBoostUI() {
+            checkDailyAdReset();
+            const btn = document.getElementById('btn-watch-ad');
+            const statusText = document.getElementById('boost-status-text');
+            const now = Date.now();
+
+            if (player.boostExpiresAt > now) {
+                const remainingMinutes = Math.ceil((player.boostExpiresAt - now) / (60 * 1000));
+                statusText.innerHTML = `<span style="color: #10b981; font-weight: bold;">⚡ Active (${remainingMinutes}m left)</span>`;
+                btn.innerText = "Watch More";
+                btn.removeAttribute("disabled");
+            } else if (player.adDailyCount >= 2) {
+                btn.innerText = "Maxed";
+                btn.setAttribute("disabled", "true");
+                statusText.innerText = `Daily limit reached (2/2 claims)`;
+            } else {
+                btn.innerText = "Watch Ad";
+                btn.removeAttribute("disabled");
+                statusText.innerText = `Progress: ${player.adProgress}/2 Ads (${2 - player.adDailyCount} left)`;
+            }
+        }
+
+        function updateUI() {
+            checkDailyAdReset();
+            document.getElementById('znt-score').innerText = Math.floor(player.balanceZentic).toLocaleString() + ' Zentic';
+            
+            let totalOut = 0;
+            let nestHtml = '';
+            const now = Date.now();
+            const isBoostActive = player.boostExpiresAt && (player.boostExpiresAt > now);
+            const multiplier = isBoostActive ? 2 : 1;
+            
+            player.nest.forEach(d => {
+                if(now < d.expiresAt) {
+                    d.status = "ACTIVE";
+                    totalOut += (d.yieldPerHour * multiplier);
+                } else {
+                    d.status = "KILLED";
+                }
+                
+                nestHtml += `
+                    <div class="dragon-card ${DRAGON_STATS[d.rarity].classStyle}">
+                        <div class="dragon-img">${DRAGON_STATS[d.rarity].icon}</div>
+                        <div class="dragon-rarity">${d.rarity}</div>
+                        <div class="dragon-yield">+${d.yieldPerHour * multiplier} Zentic/h ${isBoostActive ? '(⚡2x)' : ''}</div>
+                        <div class="dragon-lifespan ${d.status === 'KILLED' ? 'status-killed' : ''}">
+                            Status: ${d.status}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('total-output').innerText = `+${totalOut.toLocaleString()} Zentic / hour`;
+            document.getElementById('nest-container').innerHTML = nestHtml;
+            
+            updateBoostUI();
+        }
+
+        function buyEgg(eggName, cost) {
+            if (player.balanceZentic < cost) {
+                alert('Insufficient Zentic balance!');
+                return;
+            }
+            player.balanceZentic -= cost;
+            
+            const rarities = ['Common', 'Uncommon'];
+            const chosenRarity = rarities[Math.floor(Math.random() * rarities.length)];
+            
+            player.nest.push({
+                id: `dragon_${Date.now()}`,
+                rarity: chosenRarity,
+                yieldPerHour: DRAGON_STATS[chosenRarity].yieldPerHour,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (DRAGON_STATS[chosenRarity].lifespanDays * 24 * 60 * 60 * 1000),
+                status: "ACTIVE"
+            });
+
+            saveGameState();
+            updateUI();
+            alert(`Successfully purchased ${eggName}! Received a ${chosenRarity} dragon.`);
+            switchScreen('nest');
+        }
+
+        function buyEggStars(eggName, starsCost, guaranteedRarity) {
+            let isPaid = confirm(`Telegram Stars Simulation: Buy ${eggName} for ${starsCost} Stars?`);
+            if (!isPaid) return;
+
+            player.nest.push({
+                id: `dragon_${Date.now()}`,
+                rarity: guaranteedRarity,
+                yieldPerHour: DRAGON_STATS[guaranteedRarity].yieldPerHour,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (DRAGON_STATS[guaranteedRarity].lifespanDays * 24 * 60 * 60 * 1000),
+                status: "ACTIVE"
+            });
+
+            saveGameState();
+            updateUI();
+            alert(`🎉 Success! ${eggName} opened and a ${guaranteedRarity} dragon joined your Nest!`);
+            switchScreen('nest');
+        }
+
+        function toggleConnectWallet() {
+            player.walletConnected = !player.walletConnected;
+            if (player.walletConnected) {
+                player.walletAddress = "EQD1...DragonLair99";
+                document.getElementById('wallet-status-text').innerText = "🔌 TON Wallet: Connected";
+                document.getElementById('wallet-details-box').style.display = "block";
+                document.getElementById('wallet-addr-text').innerText = player.walletAddress;
+                document.getElementById('quota-tier-text').innerText = "4,000,000 Zentic / week";
+                document.getElementById('wallet-action-btn').innerText = "Disconnect Wallet";
+                document.getElementById('withdraw-btn').removeAttribute('disabled');
+            } else {
+                player.walletAddress = null;
+                document.getElementById('wallet-status-text').innerText = "🔌 TON Wallet: Not Connected";
+                document.getElementById('wallet-details-box').style.display = "none";
+                document.getElementById('wallet-action-btn').innerText = "Connect TON Wallet";
+                document.getElementById('withdraw-btn').setAttribute('disabled', 'true');
+            }
+            saveGameState();
+        }
+
+        function withdrawZentic() {
+            alert('Withdrawal request successfully submitted to the TON network!');
+        }
+
+        function copyReferralLink() {
+            navigator.clipboard.writeText("https://t.me/DragonlairBot?start=ref_" + Date.now());
+            alert('Referral link copied to clipboard!');
+        }
+
+        // Game loop ticking every second
+        setInterval(() => {
+            const now = Date.now();
+            const isBoostActive = player.boostExpiresAt && (player.boostExpiresAt > now);
+            let activeYield = 0;
+            const multiplier = isBoostActive ? 2 : 1;
+
+            player.nest.forEach(d => {
+                if (now < d.expiresAt) {
+                    d.status = "ACTIVE";
+                    activeYield += (d.yieldPerHour * multiplier);
+                } else {
+                    d.status = "KILLED";
+                }
+            });
+
+            player.balanceZentic += (activeYield / 3600);
+            updateUI();
+            saveGameState();
+        }, 1000);
+
+        // Hide loading screen automatically
+        setTimeout(() => {
+            switchScreen('nest');
+            updateUI();
+        }, 1500);
+    </script>
+</body>
+</html
